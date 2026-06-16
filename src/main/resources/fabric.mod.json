@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "smarthud",
+  "version": "${version}",
+  "name": "SmartHUD",
+  "description": "Adds inventory item slots next to your hotbar and an item pickup ticker.",
+  "authors": [
+    "Chloe Dawn"
+  ],
+  "contributors": [
+    "riosisrelg"
+  ],
+  "contact": {
+    "homepage": "https://github.com/ChloeDawn/SmartHUD",
+    "sources": "https://github.com/ChloeDawn/SmartHUD"
+  },
+  "license": "Apache-2.0",
+  "icon": "assets/smarthud/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.sapphic.smarthud.SmartHudClient"
+    ],
+    "modmenu": [
+      "dev.sapphic.smarthud.compat.SmartHudModMenuIntegration"
+    ]
+  },
+  "mixins": [
+    "smarthud.client.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "minecraft": "~1.21.1",
+    "java": ">=21",
+    "fabric-api": "*",
+    "cloth-config": ">=15.0.0"
+  },
+  "recommends": {
+    "modmenu": ">=11.0.0"
+  },
+  "suggests": {
+    "trinkets": ">=3.10.0",
+    "immersive-overlays": "*"
+  }
+}

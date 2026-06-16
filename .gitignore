@@ -1,0 +1,17 @@
+# Gradle build files
+.gradle/
+build/
+
+# Local JDK installation
+.jdk/
+
+# OS-specific files
+.DS_Store
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+
+# Log files
+*.log

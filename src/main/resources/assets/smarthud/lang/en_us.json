@@ -1,0 +1,41 @@
+{
+  "smarthud.config": "SmartHUD Configuration",
+
+  "smarthud.config.slots": "Item Slots",
+  "smarthud.config.slots.tooltip": "Configure the item slots",
+  "smarthud.config.slots.empty": "Include Empty",
+  "smarthud.config.slots.empty.tooltip": "Always draw a slot regardless of items present",
+  "smarthud.config.slots.style": "Style",
+  "smarthud.config.slots.style.tooltip": "The look and feel of the item slots",
+  "smarthud.config.slots.enabled": "Enabled",
+  "smarthud.config.slots.enabled.tooltip": "Enable the item slots",
+  "smarthud.config.slots.cumulative": "Cumulative",
+  "smarthud.config.slots.cumulative.tooltip": "Merge similar items into the same slot",
+  "smarthud.config.slots.overlays": "Overlays",
+  "smarthud.config.slots.overlays.tooltip": "Draw the item overlays, such as enchantment glints",
+  "smarthud.config.slots.counts": "Counts",
+  "smarthud.config.slots.counts.tooltip": "Draw the (cumulative) counts of items",
+  "smarthud.config.slots.size": "Size",
+  "smarthud.config.slots.size.tooltip": "The maximum number of item slots to draw",
+
+  "smarthud.config.whitelist": "Item Slot Whitelist",
+  "smarthud.config.whitelist.tooltip": "Configure the item slot whitelist",
+  "smarthud.config.whitelist.enabled": "Whitelist Enabled",
+  "smarthud.config.whitelist.enabled.tooltip": "Enable the whitelist. If disabled, item slots will only show clocks and compasses",
+
+  "smarthud.config.ticker": "Item Ticker",
+  "smarthud.config.ticker.tooltip": "Configure the item pickup ticker",
+  "smarthud.config.ticker.duration": "Duration",
+  "smarthud.config.ticker.duration.tooltip": "The duration in milliseconds that items should be shown for",
+  "smarthud.config.ticker.style": "Style",
+  "smarthud.config.ticker.style.tooltip": "The look and feel of the item ticker",
+  "smarthud.config.ticker.enabled": "Enabled",
+  "smarthud.config.ticker.enabled.tooltip": "Enable the item ticker",
+  "smarthud.config.ticker.size": "Size",
+  "smarthud.config.ticker.size.tooltip": "The maximum number of items to show at once",
+  "smarthud.config.ticker.behavior": "Behavior",
+  "smarthud.config.ticker.behavior.tooltip": "The behavior of the item ticker. 0: Sort by most recent pickup, 1: Sort by initial pickup",
+
+  "smarthud.ticker.label.long": "%s x %s",
+  "smarthud.ticker.label.short": "x %s"
+}

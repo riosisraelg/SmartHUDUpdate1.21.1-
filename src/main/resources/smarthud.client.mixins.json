@@ -1,0 +1,12 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.sapphic.smarthud.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": [
+    "ItemPickupMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
