@@ -15,3 +15,8 @@ build/
 
 # Log files
 *.log
+
+.venv/
+site/
+
+.jdk25/

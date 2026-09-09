@@ -1,0 +1,28 @@
+[project]
+site_name = "Smart HUD"
+name = "Smart HUD"
+description = "A Minecraft Fabric mod that adds an inventory item slot hotbar and an item pickup ticker."
+
+[theme]
+variant = "modern"
+palette = "dark"
+
+[navigation]
+indexes = true
+sections = true
+
+[build]
+strict = true
+clean = true
+
+[project.validation]
+invalid_links = true
+invalid_link_anchors = true
+
+[nav]
+items = [
+  { "Home" = "index.md" },
+  { "Architecture" = "architecture.md" },
+  { "Requirements (SRS)" = "srs.md" },
+  { "Execution Plan" = "tasks.md" }
+]

@@ -1,0 +1,41 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/Users/riosisrelg/.gradle/wrapper/dists/gradle-9.5.1-bin/iq79hdu3mqx29lgffhp8bfmx/gradle-9.5.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+
+> Configure project :
+Fabric Loom: 1.17.11
+
+> Task :compileJava FAILED
+/Users/riosisrelg/Downloads/SmartHUDUpdate1.21.1--1.12.x/src/main/java/dev/sapphic/smarthud/item/cache/TrinketCache.java:47: error: cannot find symbol
+      eu.pb4.trinkets.api.TrinketsApi.getTrinketComponent(player).ifPresent(component -> {
+                                     ^
+  symbol:   method getTrinketComponent(Player)
+  location: class TrinketsApi
+Note: /Users/riosisrelg/Downloads/SmartHUDUpdate1.21.1--1.12.x/src/main/java/dev/sapphic/smarthud/config/SlotWhitelist.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+1 error
+
+[Incubating] Problems report is available at: file:///Users/riosisrelg/Downloads/SmartHUDUpdate1.21.1--1.12.x/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':compileJava' (registered by plugin class 'org.gradle.api.plugins.JavaBasePlugin').
+> Compilation failed; see the compiler output below.
+  Note: /Users/riosisrelg/Downloads/SmartHUDUpdate1.21.1--1.12.x/src/main/java/dev/sapphic/smarthud/config/SlotWhitelist.java uses or overrides a deprecated API.
+  Note: Recompile with -Xlint:deprecation for details.
+  /Users/riosisrelg/Downloads/SmartHUDUpdate1.21.1--1.12.x/src/main/java/dev/sapphic/smarthud/item/cache/TrinketCache.java:47: error: cannot find symbol
+        eu.pb4.trinkets.api.TrinketsApi.getTrinketComponent(player).ifPresent(component -> {
+                                       ^
+    symbol:   method getTrinketComponent(Player)
+    location: class TrinketsApi
+  1 error
+
+* Try:
+> Check your code and dependencies to fix the compilation error(s)
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+
+BUILD FAILED in 1s
+1 actionable task: 1 executed
