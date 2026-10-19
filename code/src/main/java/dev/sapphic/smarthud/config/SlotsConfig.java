@@ -23,8 +23,20 @@ public final class SlotsConfig {
   /** Draw the (cumulative) counts of items. */
   public boolean counts = false;
 
-  /** The maximum number of item slots to draw (1–9). */
-  public int size = 3;
+  /** The maximum number of item slots to draw (1–18). */
+  public int size = 6;
+
+  /** Distribute slots across both the left and right sides of the hotbar. */
+  public boolean bothSides = true;
+
+  /** Automatically reserve horizontal space when Inventory HUD+ is loaded. */
+  public boolean inventoryHudCompat = true;
+
+  /** Extra horizontal distance (px) reserved when Inventory HUD+ is active. */
+  public int inventoryHudOffset = 52;
+
+  /** Manual horizontal offset (px) applied outward from the hotbar on both sides. */
+  public int offsetX = 0;
 
   public SlotsConfig() {}
 
@@ -37,6 +49,10 @@ public final class SlotsConfig {
     this.overlays = other.overlays;
     this.counts = other.counts;
     this.size = other.size;
+    this.bothSides = other.bothSides;
+    this.inventoryHudCompat = other.inventoryHudCompat;
+    this.inventoryHudOffset = other.inventoryHudOffset;
+    this.offsetX = other.offsetX;
   }
 
   /** Returns a fresh instance with all default values. */

@@ -1,0 +1,58 @@
+modLoader = "javafml"
+loaderVersion = "[4,)"
+license = "Apache-2.0"
+issueTrackerURL = "https://github.com/ChloeDawn/SmartHUD/issues"
+
+[[mods]]
+modId = "smarthud"
+version = "${version}"
+displayName = "SmartHUD"
+authors = "Chloe Dawn, riosisrelg"
+description = '''
+Adds inventory item slots next to your hotbar (left & right) and an item pickup ticker, with built-in compatibility for Seasons, Immersive Overlays, Accessorify, Curios, and Inventory HUD+.
+'''
+
+[[mixins]]
+config = "smarthud.neoforge.mixins.json"
+
+[[dependencies.smarthud]]
+modId = "neoforge"
+type = "required"
+versionRange = "[21.1,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.smarthud]]
+modId = "minecraft"
+type = "required"
+versionRange = "[1.21.1,1.22)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.smarthud]]
+modId = "cloth_config"
+type = "optional"
+versionRange = "[15.0.0,)"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.smarthud]]
+modId = "accessories"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.smarthud]]
+modId = "curios"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "CLIENT"
+
+[[dependencies.smarthud]]
+modId = "inventoryhud"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "CLIENT"

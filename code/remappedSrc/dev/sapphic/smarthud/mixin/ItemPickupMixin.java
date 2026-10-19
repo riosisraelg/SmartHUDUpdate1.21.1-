@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientPacketListener.class)
 public abstract class ItemPickupMixin {
 
-  @Inject(method = "onItemPickupAnimation", at = @At("TAIL"))
+  @Inject(method = "handleTakeItemEntity", at = @At("TAIL"))
   private void smarthud$onItemPickup(final ClientboundTakeItemEntityPacket packet, final CallbackInfo ci) {
     final Minecraft client = Minecraft.getInstance();
     final ClientLevel world = client.level;
@@ -24,13 +24,11 @@ public abstract class ItemPickupMixin {
       return;
     }
 
-    // Check if the collector is the local player
     final Entity collector = world.getEntity(packet.getPlayerId());
     if (collector == null || collector.getId() != client.player.getId()) {
       return;
     }
 
-    // Get the item entity that was picked up
     final Entity itemEntity = world.getEntity(packet.getItemId());
 
     if (itemEntity instanceof ItemEntity) {

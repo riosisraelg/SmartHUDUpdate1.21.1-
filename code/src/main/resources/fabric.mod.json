@@ -40,6 +40,11 @@
   },
   "suggests": {
     "trinkets": ">=3.10.0",
-    "immersive-overlays": "*"
+    "accessories": "*",
+    "accessorify": "*",
+    "immersive-overlays": "*",
+    "inventoryhud": "*",
+    "sereneseasons": "*",
+    "seasons": "*"
   }
 }

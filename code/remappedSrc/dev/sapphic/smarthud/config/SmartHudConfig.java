@@ -2,10 +2,10 @@ package dev.sapphic.smarthud.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import dev.sapphic.smarthud.platform.PlatformUtil;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
-import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
@@ -17,35 +17,22 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/**
- * Central configuration manager for SmartHUD.
- *
- * <p>Persists to {@code config/smarthud.json} using Gson and exposes a
- * Cloth Config API settings screen that can be reached via ModMenu.</p>
- */
 public final class SmartHudConfig {
   private static final Logger LOGGER = LoggerFactory.getLogger("SmartHUD");
 
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
   private static final Path CONFIG_PATH =
-      FabricLoader.getInstance().getConfigDir().resolve("smarthud.json");
+      PlatformUtil.getConfigDir().resolve("smarthud.json");
 
   private static SmartHudConfig instance;
 
-  // ---- Serialized fields ----
-
   public SlotsConfig slots = new SlotsConfig();
   public TickerConfig ticker = new TickerConfig();
-
-  /** Whether the slot whitelist is enabled. When false, only clocks and compasses are shown. */
   public boolean whitelistEnabled = true;
-
-  // ---- Lifecycle ----
 
   private SmartHudConfig() {}
 
-  /** Returns the global config instance, loading from disk on first access. */
   public static SmartHudConfig getInstance() {
     if (instance == null) {
       instance = load();
@@ -53,12 +40,17 @@ public final class SmartHudConfig {
     return instance;
   }
 
-  /** Loads the configuration from disk, returning defaults if the file is missing or corrupt. */
   private static SmartHudConfig load() {
     if (Files.exists(CONFIG_PATH)) {
       try (final Reader reader = Files.newBufferedReader(CONFIG_PATH)) {
         final SmartHudConfig loaded = GSON.fromJson(reader, SmartHudConfig.class);
         if (loaded != null) {
+          if (loaded.slots == null) {
+            loaded.slots = new SlotsConfig();
+          }
+          if (loaded.ticker == null) {
+            loaded.ticker = new TickerConfig();
+          }
           LOGGER.info("Loaded SmartHUD config from {}", CONFIG_PATH);
           return loaded;
         }
@@ -71,7 +63,6 @@ public final class SmartHudConfig {
     return defaults;
   }
 
-  /** Writes the current configuration to disk. */
   public void save() {
     try (final Writer writer = Files.newBufferedWriter(CONFIG_PATH)) {
       GSON.toJson(this, writer);
@@ -80,14 +71,6 @@ public final class SmartHudConfig {
     }
   }
 
-  // ---- Cloth Config screen ----
-
-  /**
-   * Builds and returns a Cloth Config settings screen.
-   *
-   * @param parent the parent screen to return to when this screen is closed
-   * @return the configuration {@link Screen}
-   */
   public Screen getConfigScreen(final Screen parent) {
     final ConfigBuilder builder = ConfigBuilder.create()
         .setParentScreen(parent)
@@ -99,7 +82,6 @@ public final class SmartHudConfig {
 
     final ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-    // ---- Item Slots category ----
     final ConfigCategory slotsCategory =
         builder.getOrCreateCategory(Component.translatable("smarthud.config.slots"));
 
@@ -108,6 +90,34 @@ public final class SmartHudConfig {
         .setDefaultValue(true)
         .setTooltip(Component.translatable("smarthud.config.slots.enabled.tooltip"))
         .setSaveConsumer(val -> slots.enabled = val)
+        .build());
+
+    slotsCategory.addEntry(entryBuilder
+        .startBooleanToggle(Component.translatable("smarthud.config.slots.bothSides"), slots.bothSides)
+        .setDefaultValue(true)
+        .setTooltip(Component.translatable("smarthud.config.slots.bothSides.tooltip"))
+        .setSaveConsumer(val -> slots.bothSides = val)
+        .build());
+
+    slotsCategory.addEntry(entryBuilder
+        .startBooleanToggle(Component.translatable("smarthud.config.slots.inventoryHudCompat"), slots.inventoryHudCompat)
+        .setDefaultValue(true)
+        .setTooltip(Component.translatable("smarthud.config.slots.inventoryHudCompat.tooltip"))
+        .setSaveConsumer(val -> slots.inventoryHudCompat = val)
+        .build());
+
+    slotsCategory.addEntry(entryBuilder
+        .startIntSlider(Component.translatable("smarthud.config.slots.inventoryHudOffset"), slots.inventoryHudOffset, 0, 120)
+        .setDefaultValue(52)
+        .setTooltip(Component.translatable("smarthud.config.slots.inventoryHudOffset.tooltip"))
+        .setSaveConsumer(val -> slots.inventoryHudOffset = val)
+        .build());
+
+    slotsCategory.addEntry(entryBuilder
+        .startIntSlider(Component.translatable("smarthud.config.slots.offsetX"), slots.offsetX, -100, 200)
+        .setDefaultValue(0)
+        .setTooltip(Component.translatable("smarthud.config.slots.offsetX.tooltip"))
+        .setSaveConsumer(val -> slots.offsetX = val)
         .build());
 
     slotsCategory.addEntry(entryBuilder
@@ -146,13 +156,12 @@ public final class SmartHudConfig {
         .build());
 
     slotsCategory.addEntry(entryBuilder
-        .startIntSlider(Component.translatable("smarthud.config.slots.size"), slots.size, 1, 9)
-        .setDefaultValue(3)
+        .startIntSlider(Component.translatable("smarthud.config.slots.size"), slots.size, 1, 18)
+        .setDefaultValue(6)
         .setTooltip(Component.translatable("smarthud.config.slots.size.tooltip"))
         .setSaveConsumer(val -> slots.size = val)
         .build());
 
-    // ---- Whitelist toggle (under slots) ----
     slotsCategory.addEntry(entryBuilder
         .startBooleanToggle(Component.translatable("smarthud.config.slots.whitelist"), whitelistEnabled)
         .setDefaultValue(true)
@@ -160,7 +169,6 @@ public final class SmartHudConfig {
         .setSaveConsumer(val -> whitelistEnabled = val)
         .build());
 
-    // ---- Item Ticker category ----
     final ConfigCategory tickerCategory =
         builder.getOrCreateCategory(Component.translatable("smarthud.config.ticker"));
 

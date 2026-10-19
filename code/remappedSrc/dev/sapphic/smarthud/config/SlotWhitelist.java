@@ -10,7 +10,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.JsonAdapter;
-import net.fabricmc.loader.api.FabricLoader;
+import dev.sapphic.smarthud.platform.PlatformUtil;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -21,26 +21,27 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
-/**
- * Manages the item whitelist that controls which items appear in the HUD slots.
- * When the whitelist is disabled, only clocks and compasses are shown.
- */
 public final class SlotWhitelist {
   private static final Logger LOGGER = LoggerFactory.getLogger("SmartHUD");
 
   private static final Gson GSON =
       new GsonBuilder()
           .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+          .setPrettyPrinting()
           .setLenient()
           .create();
 
@@ -50,6 +51,8 @@ public final class SlotWhitelist {
 
   private static ImmutableCollection<Entry> allEntries = ImmutableSet.of();
   private static ImmutableCollection<Entry> entries = ImmutableSet.of();
+  private static boolean currentWhitelistEnabled = true;
+  private static int lastRegistrySize = -1;
 
   private SlotWhitelist() {}
 
@@ -58,42 +61,87 @@ public final class SlotWhitelist {
   }
 
   public static ImmutableCollection<Entry> entries() {
+    final int currentSize = BuiltInRegistries.ITEM.size();
+    if (currentWhitelistEnabled && currentSize != lastRegistrySize && !allEntries.isEmpty()) {
+      lastRegistrySize = currentSize;
+      entries =
+          allEntries.stream()
+              .filter(SlotWhitelist::ensureRegistered)
+              .collect(ImmutableSet.toImmutableSet());
+    }
     return entries;
   }
 
-  /**
-   * Rebuilds the whitelist from the config file (or uses defaults when disabled).
-   *
-   * @param whitelistEnabled whether the whitelist feature is enabled
-   */
   public static void rebuild(boolean whitelistEnabled) {
+    currentWhitelistEnabled = whitelistEnabled;
+    lastRegistrySize = BuiltInRegistries.ITEM.size();
     if (whitelistEnabled) {
-      try (final Reader reader = Files.newBufferedReader(generateConfigs())) {
-        allEntries = ImmutableSet.copyOf(GSON.<Set<Entry>>fromJson(reader, TYPE));
+      final Set<Entry> builtInDefaults = loadBuiltInDefaults();
+      final Path configPath = generateConfigs();
+      try (final Reader reader = Files.newBufferedReader(configPath, StandardCharsets.UTF_8)) {
+        final Set<Entry> loaded = GSON.fromJson(reader, TYPE);
+        final Set<Entry> merged = new LinkedHashSet<>();
+        if (loaded != null) {
+          merged.addAll(loaded);
+        }
+        boolean updated = false;
+        for (final Entry def : builtInDefaults) {
+          final boolean alreadyHasItem = merged.stream().anyMatch(e -> e.item.equals(def.item));
+          if (!alreadyHasItem) {
+            merged.add(def);
+            updated = true;
+          }
+        }
+        if (updated) {
+          try (final Writer writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
+            GSON.toJson(merged, TYPE, writer);
+          } catch (final IOException e) {
+            LOGGER.warn("Failed to update whitelist with new default items", e);
+          }
+        }
+        allEntries = ImmutableSet.copyOf(merged);
         entries =
             allEntries.stream()
                 .filter(SlotWhitelist::ensureRegistered)
                 .collect(ImmutableSet.toImmutableSet());
       } catch (final Exception e) {
-        LOGGER.error("Failed to load whitelist", e);
+        LOGGER.error("Failed to load whitelist, falling back to built-in defaults", e);
+        allEntries = ImmutableSet.copyOf(builtInDefaults);
+        entries =
+            allEntries.stream()
+                .filter(SlotWhitelist::ensureRegistered)
+                .collect(ImmutableSet.toImmutableSet());
       }
     } else {
       entries = ImmutableSet.of(
-          new Entry(BuiltInRegistries.ITEM.getKey(Items.CLOCK)),
-          new Entry(BuiltInRegistries.ITEM.getKey(Items.COMPASS))
+          new Entry(BuiltInRegistries.ITEM.getKey(Items.COMPASS), false),
+          new Entry(BuiltInRegistries.ITEM.getKey(Items.RECOVERY_COMPASS), true),
+          new Entry(BuiltInRegistries.ITEM.getKey(Items.CLOCK), true)
       );
     }
   }
 
-  /** Returns the config directory for SmartHUD whitelist files. */
-  private static Path configDir() {
-    return FabricLoader.getInstance().getConfigDir().resolve("smarthud");
+  private static Set<Entry> loadBuiltInDefaults() {
+    try (final @Nullable InputStream stream =
+        SlotWhitelist.class.getResourceAsStream("/defaults.json")) {
+      if (stream != null) {
+        try (final Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+          final Set<Entry> defaults = GSON.fromJson(reader, TYPE);
+          if (defaults != null) {
+            return defaults;
+          }
+        }
+      }
+    } catch (final Exception e) {
+      LOGGER.error("Failed to read built-in defaults.json", e);
+    }
+    return Collections.emptySet();
   }
 
-  /**
-   * Copies the built-in defaults.json to the user config directory if it does not
-   * already exist, then returns the path to the user-editable whitelist file.
-   */
+  private static Path configDir() {
+    return PlatformUtil.getConfigDir().resolve("smarthud");
+  }
+
   private static Path generateConfigs() {
     final Path dir = configDir();
 
@@ -125,8 +173,6 @@ public final class SlotWhitelist {
     return true;
   }
 
-  // ---- Entry inner class ----
-
   public static final class Entry {
     @JsonAdapter(IdentifierDeserializer.class)
     private final ResourceLocation item;
@@ -136,26 +182,20 @@ public final class SlotWhitelist {
     @JsonAdapter(DimensionsDeserializer.class)
     private final @Nullable Set<String> dimensions;
 
-    /** Default / no-arg constructor for Gson. */
     public Entry() {
-      this(ResourceLocation.fromNamespaceAndPath("minecraft", "air"));
+      this(ResourceLocation.fromNamespaceAndPath("minecraft", "air"), true);
     }
 
-    /** Creates an entry for a specific item with default settings. */
     public Entry(final ResourceLocation item) {
+      this(item, true);
+    }
+
+    public Entry(final ResourceLocation item, final boolean ignoreNbt) {
       this.item = item;
-      this.ignoreNbt = true;
+      this.ignoreNbt = ignoreNbt;
       this.dimensions = null;
     }
 
-    /**
-     * Checks whether the given ItemStack matches this entry, optionally
-     * filtering by dimension.
-     *
-     * @param stack        the item stack to test
-     * @param dimensionKey the registry key of the current dimension,
-     *                     e.g. "minecraft:overworld"
-     */
     public boolean equals(final ItemStack stack, final String dimensionKey) {
       if (this.dimensions != null && !this.dimensions.contains(dimensionKey)) {
         return false;
@@ -198,9 +238,6 @@ public final class SlotWhitelist {
           && Objects.equals(this.dimensions, that.dimensions);
     }
 
-    // ---- JSON deserializers ----
-
-    /** Deserializes a JSON string to an {@link ResourceLocation}. */
     public static final class IdentifierDeserializer implements JsonDeserializer<ResourceLocation> {
       @Override
       public ResourceLocation deserialize(
@@ -213,10 +250,6 @@ public final class SlotWhitelist {
       }
     }
 
-    /**
-     * Deserializes a JSON array of dimension strings (e.g. ["minecraft:overworld"])
-     * into an unmodifiable {@link Set} of strings.
-     */
     public static final class DimensionsDeserializer implements JsonDeserializer<Set<String>> {
       @Override
       public Set<String> deserialize(

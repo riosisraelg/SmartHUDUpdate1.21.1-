@@ -10,7 +10,7 @@ import com.google.gson.JsonDeserializationContext;
 import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.annotations.JsonAdapter;
-import net.fabricmc.loader.api.FabricLoader;
+import dev.sapphic.smarthud.platform.PlatformUtil;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.registry.Registries;
@@ -21,13 +21,17 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Writer;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
@@ -41,6 +45,7 @@ public final class SlotWhitelist {
   private static final Gson GSON =
       new GsonBuilder()
           .setFieldNamingPolicy(FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
+          .setPrettyPrinting()
           .setLenient()
           .create();
 
@@ -50,6 +55,8 @@ public final class SlotWhitelist {
 
   private static ImmutableCollection<Entry> allEntries = ImmutableSet.of();
   private static ImmutableCollection<Entry> entries = ImmutableSet.of();
+  private static boolean currentWhitelistEnabled = true;
+  private static int lastRegistrySize = -1;
 
   private SlotWhitelist() {}
 
@@ -58,6 +65,14 @@ public final class SlotWhitelist {
   }
 
   public static ImmutableCollection<Entry> entries() {
+    final int currentSize = Registries.ITEM.size();
+    if (currentWhitelistEnabled && currentSize != lastRegistrySize && !allEntries.isEmpty()) {
+      lastRegistrySize = currentSize;
+      entries =
+          allEntries.stream()
+              .filter(SlotWhitelist::ensureRegistered)
+              .collect(ImmutableSet.toImmutableSet());
+    }
     return entries;
   }
 
@@ -67,27 +82,75 @@ public final class SlotWhitelist {
    * @param whitelistEnabled whether the whitelist feature is enabled
    */
   public static void rebuild(boolean whitelistEnabled) {
+    currentWhitelistEnabled = whitelistEnabled;
+    lastRegistrySize = Registries.ITEM.size();
     if (whitelistEnabled) {
-      try (final Reader reader = Files.newBufferedReader(generateConfigs())) {
-        allEntries = ImmutableSet.copyOf(GSON.<Set<Entry>>fromJson(reader, TYPE));
+      final Set<Entry> builtInDefaults = loadBuiltInDefaults();
+      final Path configPath = generateConfigs();
+      try (final Reader reader = Files.newBufferedReader(configPath, StandardCharsets.UTF_8)) {
+        final Set<Entry> loaded = GSON.fromJson(reader, TYPE);
+        final Set<Entry> merged = new LinkedHashSet<>();
+        if (loaded != null) {
+          merged.addAll(loaded);
+        }
+        // Ensure all built-in defaults (e.g. newly added mod compatibility items) are present
+        boolean updated = false;
+        for (final Entry def : builtInDefaults) {
+          final boolean alreadyHasItem = merged.stream().anyMatch(e -> e.item.equals(def.item));
+          if (!alreadyHasItem) {
+            merged.add(def);
+            updated = true;
+          }
+        }
+        if (updated) {
+          try (final Writer writer = Files.newBufferedWriter(configPath, StandardCharsets.UTF_8)) {
+            GSON.toJson(merged, TYPE, writer);
+          } catch (final IOException e) {
+            LOGGER.warn("Failed to update whitelist with new default items", e);
+          }
+        }
+        allEntries = ImmutableSet.copyOf(merged);
         entries =
             allEntries.stream()
                 .filter(SlotWhitelist::ensureRegistered)
                 .collect(ImmutableSet.toImmutableSet());
       } catch (final Exception e) {
-        LOGGER.error("Failed to load whitelist", e);
+        LOGGER.error("Failed to load whitelist, falling back to built-in defaults", e);
+        allEntries = ImmutableSet.copyOf(builtInDefaults);
+        entries =
+            allEntries.stream()
+                .filter(SlotWhitelist::ensureRegistered)
+                .collect(ImmutableSet.toImmutableSet());
       }
     } else {
       entries = ImmutableSet.of(
-          new Entry(Registries.ITEM.getId(Items.CLOCK)),
-          new Entry(Registries.ITEM.getId(Items.COMPASS))
+          new Entry(Registries.ITEM.getId(Items.COMPASS), false),
+          new Entry(Registries.ITEM.getId(Items.RECOVERY_COMPASS), true),
+          new Entry(Registries.ITEM.getId(Items.CLOCK), true)
       );
     }
   }
 
+  private static Set<Entry> loadBuiltInDefaults() {
+    try (final @Nullable InputStream stream =
+        SlotWhitelist.class.getResourceAsStream("/defaults.json")) {
+      if (stream != null) {
+        try (final Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
+          final Set<Entry> defaults = GSON.fromJson(reader, TYPE);
+          if (defaults != null) {
+            return defaults;
+          }
+        }
+      }
+    } catch (final Exception e) {
+      LOGGER.error("Failed to read built-in defaults.json", e);
+    }
+    return Collections.emptySet();
+  }
+
   /** Returns the config directory for SmartHUD whitelist files. */
   private static Path configDir() {
-    return FabricLoader.getInstance().getConfigDir().resolve("smarthud");
+    return PlatformUtil.getConfigDir().resolve("smarthud");
   }
 
   /**
@@ -138,13 +201,18 @@ public final class SlotWhitelist {
 
     /** Default / no-arg constructor for Gson. */
     public Entry() {
-      this(Identifier.of("minecraft", "air"));
+      this(Identifier.of("minecraft", "air"), true);
     }
 
     /** Creates an entry for a specific item with default settings. */
     public Entry(final Identifier item) {
+      this(item, true);
+    }
+
+    /** Creates an entry for a specific item with explicit NBT matching behavior. */
+    public Entry(final Identifier item, final boolean ignoreNbt) {
       this.item = item;
-      this.ignoreNbt = true;
+      this.ignoreNbt = ignoreNbt;
       this.dimensions = null;
     }
 

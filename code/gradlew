@@ -118,6 +118,29 @@ CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
 
 # Determine the Java command to use to start the JVM.
+if [ -z "$JAVA_HOME" ] ; then
+    for candidate in \
+        "$HOME/Library/Java/JavaVirtualMachines"/*/Contents/Home \
+        "$HOME/.gradle/jdks"/*/Contents/Home \
+        "$HOME/.gradle/jdks"/* \
+        "$HOME/.sdkman/candidates/java/current" \
+        "$HOME/.mise/installs/java"/* \
+        "$HOME/.asdf/installs/java"/* \
+        "$HOME/Library/Application Support/ModrinthApp/meta/java_versions"/*/Contents/Home \
+        "$HOME/Library/Application Support/ModrinthApp/meta/java_versions"/* \
+        "$HOME/Library/Application Support/PrismLauncher/java"/*/Contents/Home \
+        "$HOME/Library/Application Support/minecraft/runtime"/*/*/jre.bundle/Contents/Home \
+        "/Applications/IntelliJ IDEA.app/Contents/jbr/Contents/Home" \
+        "/Applications/IntelliJ IDEA CE.app/Contents/jbr/Contents/Home" \
+        "/Applications/Android Studio.app/Contents/jbr/Contents/Home"
+    do
+        if [ -x "$candidate/bin/javac" ] ; then
+            JAVA_HOME="$candidate"
+            export JAVA_HOME
+            break
+        fi
+    done
+fi
 if [ -n "$JAVA_HOME" ] ; then
     if [ -x "$JAVA_HOME/jre/sh/java" ] ; then
         # IBM's JDK on AIX uses strange locations for the executables

@@ -75,13 +75,13 @@ public final class TickerRenderer {
       drawContext.drawString(client.font, label, (int) labelX, oy, 0xFFFFFF, true);
 
       if (SmartHudConfig.getInstance().ticker.style.hasIcons()) {
-        drawContext.pose().pushMatrix();
-        drawContext.pose().translate(iconX, (float) oy - 1.5F);
-        drawContext.pose().scale(0.67F, 0.67F);
+        drawContext.pose().pushPose();
+        drawContext.pose().translate(iconX, (float) oy - 1.5F, 0.0F);
+        drawContext.pose().scale(0.67F, 0.67F, 0.67F);
 
         drawContext.renderItem(item.stack(), 0, 0);
 
-        drawContext.pose().popMatrix();
+        drawContext.pose().popPose();
       }
     }
   }

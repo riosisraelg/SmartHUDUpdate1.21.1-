@@ -1,11 +1,64 @@
 [
   {
-    "item": "minecraft:compass"
+    "item": "minecraft:compass",
+    "ignore_nbt": false
   },
   {
     "item": "minecraft:recovery_compass"
   },
   {
     "item": "minecraft:clock"
+  },
+  {
+    "item": "sereneseasons:calendar"
+  },
+  {
+    "item": "seasons:season_calendar"
+  },
+  {
+    "item": "eclipticseasons:calendar"
+  },
+  {
+    "item": "simpleseasons:calendar"
+  },
+  {
+    "item": "legendarysurvivaloverhaul:seasonal_calendar"
+  },
+  {
+    "item": "supplementaries:altimeter"
+  },
+  {
+    "item": "caverns_and_chasms:depth_gauge"
+  },
+  {
+    "item": "caverns_and_chasms:barometer"
+  },
+  {
+    "item": "spelunkery:depth_gauge"
+  },
+  {
+    "item": "spelunkery:magnetic_compass",
+    "ignore_nbt": false
+  },
+  {
+    "item": "breezy:gust_gauge"
+  },
+  {
+    "item": "oreganized:thermometer"
+  },
+  {
+    "item": "toughasnails:thermometer"
+  },
+  {
+    "item": "legendarysurvivaloverhaul:thermometer"
+  },
+  {
+    "item": "firmaciv:nav_clock"
+  },
+  {
+    "item": "firmaciv:barometer"
+  },
+  {
+    "item": "firmaciv:sextant"
   }
 ]
